@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            direction: rtl;
+            gap: 1em;
+            background-color: rgb(93 129 163);
+            height: 100vh;
+            color: #fff;
+        }
+
+        input {
+            font-size: 2em;
+            text-align: center;
+        }
+
+        label {
+            font-size: 2em;
+
+        }
+
+        input[type="checkbox"] {
+            transform: scale(2);
+        }
+
+        #list {
+            overflow: auto;
+            flex: 1;
+            font-size: 1.5em;
+
+            & div {
+                padding: 0.5em;
+                background: #00000026;
+                border-radius: 0.5em;
+                margin: 0.5em 2em;
+                box-shadow: 0 0.55em 0.4em -0.6em #000;
+            }
+        }
+
+        .head {
+            background-color: #ffffff48;
+            width: auto;
+            margin: auto;
+            padding: 1em 2em;
+            padding-top: 0;
+            border-radius: 1em;
+            box-shadow: 0 1em 1em -1em #000;
+            text-shadow: 0 0.1em #000, 0 0.1em 0.2em #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="head">
+        <h1>חיפוש רכבים עם תג נכה:</h1>
+        <input id="searchInput" type="number" onkeyup="search(this.value)" placeholder="הזן מספר רכב">
+        <br>
+        <input type="checkbox" id="searchSimular" onclick="search(searchInput.value)">
+        <label for="searchSimular">מספרים דומים</label>
+    </div>
+    <div id="list"></div>
+
+    <script>
+        /** @type {Array.<{MISPAR_RECHEV: Number, SUG_TAG: Number, TAARICH_HAFAKAT_TAG: Number}>} handisList*/
+        var handisList = []
+        const url = `https://data.gov.il/api/3/action/datastore_search?resource_id=c8b9f9c8-4612-4068-934f-d4acd2e3c06e&limit=200`;
+        async function getHandis() {
+            const res = await fetch(url);
+            const data = await res.json();
+            handisList = data.result.records;
+        }
+        getHandis();
+
+        function search(searchVal) {
+            if (searchVal == "")
+                return;
+            const searchFor = document.querySelector("#searchSimular").checked;
+            let filtered;
+            if (searchFor)
+                filtered = handisList.filter(listing => listing["MISPAR RECHEV"].toString().startsWith(searchVal))
+                    .sort((a, b) => (a["MISPAR RECHEV"] > b["MISPAR RECHEV"]) ? 1 : -1)
+            else
+                filtered = [handisList.find(listing => listing["MISPAR RECHEV"] == searchVal)]
+
+            const list = document.querySelector("#list");
+
+
+            if (filtered[0] == undefined) {
+                list.innerHTML = "רכב לא קיים במערכת.";
+                return
+            }
+
+            list.innerHTML = ""
+            filtered.forEach(listing => {
+                const rawDate = listing["TAARICH HAFAKAT TAG"].toString();
+                list.innerHTML += `<div>מספר רכב: ${listing["MISPAR RECHEV"]}. הופק ב: ${rawDate.slice(0, 4)} / ${rawDate.slice(4, 6)} / ${rawDate.slice(6, 8)}</div>`
+            });
+        }
+    </script>
+</body>
+
+</html>
